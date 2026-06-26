@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+
+# AWS CDK
+cdk.out/
+.cdk.staging/
+*.d.ts
+node_modules/
+
+# Node / Frontend
+node_modules/
+dist/
+.next/
+.nuxt/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AWS credentials — NEVER commit these
+.aws/
+credentials
+aws_credentials.json
+
+# Secrets
+*.pem
+*.key
+secrets.json
+
+# Logs
+*.log
+logs/
+
+# Docker
+.docker/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
