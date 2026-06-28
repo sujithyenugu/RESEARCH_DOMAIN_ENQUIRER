@@ -1,0 +1,88 @@
+{
+  "_comment": "OpenSearch Index Lifecycle Management (ILM) policy for paper_chunks index.",
+  "_doc_ref": "VECTOR_PIPELINE.md §Index Lifecycle Management",
+
+  "policy": {
+    "description": "Research RAG — paper_chunks index lifecycle: hot → warm → cold",
+
+    "default_state": "hot",
+
+    "states": [
+
+      {
+        "name": "hot",
+        "_comment": "Active write phase — first 30 days after index creation or rollover",
+        "actions": [
+          {
+            "rollover": {
+              "min_size": "50gb",
+              "min_index_age": "30d",
+              "_comment": "Rollover when index exceeds 50 GB OR is 30 days old"
+            }
+          }
+        ],
+        "transitions": [
+          {
+            "state_name": "warm",
+            "conditions": {
+              "min_index_age": "30d"
+            }
+          }
+        ]
+      },
+
+      {
+        "name": "warm",
+        "_comment": "Read-mostly phase — 30 to 180 days. Reduce replicas to cut cost.",
+        "actions": [
+          {
+            "replica_count": {
+              "number_of_replicas": 0,
+              "_comment": "Remove replicas — warm data is accessed infrequently"
+            }
+          },
+          {
+            "force_merge": {
+              "max_num_segments": 1,
+              "_comment": "Force merge to single segment for read efficiency"
+            }
+          }
+        ],
+        "transitions": [
+          {
+            "state_name": "cold",
+            "conditions": {
+              "min_index_age": "180d"
+            }
+          }
+        ]
+      },
+
+      {
+        "name": "cold",
+        "_comment": "Archive phase — 180+ days. Move to UltraWarm (S3-backed) storage. Read-only.",
+        "actions": [
+          {
+            "read_only": {},
+            "_comment": "Block all writes to this index"
+          },
+          {
+            "replica_count": {
+              "number_of_replicas": 0
+            }
+          }
+        ],
+        "transitions": []
+      }
+
+    ]
+  },
+
+  "ism_template": [
+    {
+      "index_patterns": ["paper_chunks*"],
+      "priority": 100,
+      "_comment": "Apply this policy to all paper_chunks-* indexes automatically"
+    }
+  ]
+}

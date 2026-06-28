@@ -1,0 +1,152 @@
+{
+  "_comment": "OpenSearch index mapping for paper_chunks — deployed by the opensearch-initializer Lambda after StorageStack is up.",
+  "_doc_ref": "VECTOR_PIPELINE.md §Index Mapping: paper_chunks",
+
+  "settings": {
+    "number_of_shards": 6,
+    "number_of_replicas": 1,
+    "index": {
+      "knn": true,
+      "knn.algo_param.ef_search": 512,
+      "refresh_interval": "30s"
+    },
+    "analysis": {
+      "analyzer": {
+        "research_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "english_stop",
+            "english_stemmer",
+            "asciifolding"
+          ]
+        }
+      },
+      "filter": {
+        "english_stop": {
+          "type": "stop",
+          "stopwords": "_english_"
+        },
+        "english_stemmer": {
+          "type": "stemmer",
+          "language": "english"
+        }
+      }
+    }
+  },
+
+  "mappings": {
+    "properties": {
+      "chunk_id": {
+        "type": "keyword",
+        "_comment": "Unique chunk identifier: {paper_id}_{section_id}_chunk{N}"
+      },
+      "paper_id": {
+        "type": "keyword",
+        "_comment": "arXiv paper ID e.g. 2401.12345"
+      },
+      "section_id": {
+        "type": "keyword",
+        "_comment": "Section identifier e.g. abstract, sec_1, sec_2"
+      },
+      "section_title": {
+        "type": "keyword",
+        "_comment": "Human-readable section title"
+      },
+      "chunk_index": {
+        "type": "integer",
+        "_comment": "Zero-based chunk position within the section"
+      },
+      "text": {
+        "type": "text",
+        "analyzer": "research_analyzer",
+        "term_vector": "with_positions_offsets",
+        "_comment": "Chunk text — used for BM25 full-text search"
+      },
+      "embedding": {
+        "type": "knn_vector",
+        "dimension": 1536,
+        "method": {
+          "name": "hnsw",
+          "space_type": "cosinesimil",
+          "engine": "nmslib",
+          "parameters": {
+            "ef_construction": 512,
+            "m": 16
+          }
+        },
+        "_comment": "1536-dim Titan Embeddings V2 vector — used for dense KNN search"
+      },
+      "page": {
+        "type": "integer",
+        "_comment": "PDF page number (1-indexed)"
+      },
+      "token_start": {
+        "type": "integer",
+        "_comment": "Start token position within the section (late chunking)"
+      },
+      "token_end": {
+        "type": "integer",
+        "_comment": "End token position within the section (late chunking)"
+      },
+      "token_count": {
+        "type": "integer",
+        "_comment": "Number of tokens in this chunk"
+      },
+      "char_count": {
+        "type": "integer",
+        "_comment": "Number of characters in this chunk"
+      },
+      "has_equations": {
+        "type": "boolean",
+        "_comment": "True if chunk contains LaTeX equations"
+      },
+      "has_tables": {
+        "type": "boolean",
+        "_comment": "True if chunk references a table"
+      },
+      "published_date": {
+        "type": "date",
+        "format": "yyyy-MM-dd",
+        "_comment": "Paper publication date — used for date-range filtering"
+      },
+      "ingested_at": {
+        "type": "date",
+        "_comment": "Timestamp when chunk was indexed (set by ingest pipeline)"
+      },
+      "authors": {
+        "type": "keyword",
+        "_comment": "List of author names — keyword for exact/filter queries"
+      },
+      "categories": {
+        "type": "keyword",
+        "_comment": "arXiv categories e.g. cs.AI, cs.LG — for category filtering"
+      },
+      "entities": {
+        "type": "keyword",
+        "_comment": "Named entities (MODEL, DATASET, METHOD, etc.) extracted by Claude Haiku"
+      },
+      "concepts": {
+        "type": "keyword",
+        "_comment": "General research concepts e.g. attention, tokenization"
+      },
+      "title": {
+        "type": "text",
+        "analyzer": "research_analyzer",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "_comment": "Exact match version of title"
+          }
+        },
+        "_comment": "Paper title — boosted in BM25 queries (^3)"
+      },
+      "abstract": {
+        "type": "text",
+        "analyzer": "research_analyzer",
+        "_comment": "Paper abstract — boosted in BM25 queries (^1.5)"
+      }
+    }
+  }
+}
