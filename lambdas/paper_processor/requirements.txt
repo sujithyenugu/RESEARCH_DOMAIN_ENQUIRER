@@ -1,0 +1,11 @@
+# paper_processor Lambda dependencies
+#
+# boto3 is pre-installed in the Lambda Python 3.11 runtime — not listed here.
+# All modules in this Lambda use only stdlib + boto3.
+#
+# If you add external packages (e.g. tiktoken for accurate token counting),
+# list them here. CDK asset bundling will run `pip install -r requirements.txt`
+# before zipping the Lambda deployment package.
+#
+# Uncomment if needed:
+# tiktoken==0.7.0       # Accurate BPE token counting (replaces char heuristic)

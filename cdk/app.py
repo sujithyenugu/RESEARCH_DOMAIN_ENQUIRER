@@ -22,6 +22,7 @@ Usage:
 
 import aws_cdk as cdk
 from stacks.storage_stack import StorageStack
+from stacks.ingestion_stack import IngestionStack
 
 # ---------------------------------------------------------------------------
 # App configuration
@@ -46,9 +47,23 @@ storage = StorageStack(
     ),
 )
 
+# ---------------------------------------------------------------------------
+# Stage 2 — Ingestion pipeline (must be deployed AFTER StorageStack)
+# ---------------------------------------------------------------------------
+ingestion = IngestionStack(
+    app,
+    "IngestionStack",
+    storage=storage,
+    env=env,
+    description=(
+        "Research Domain Enquirer — Ingestion pipeline: "
+        "EventBridge scheduler, SQS queues, paper_fetcher and paper_processor Lambdas"
+    ),
+)
+ingestion.add_dependency(storage)
+
 # Future stacks will be added here as they are implemented:
-# ingestion = IngestionStack(app, "IngestionStack", storage=storage, env=env)
-# embedding  = EmbeddingStack(app, "EmbeddingStack", storage=storage, env=env)
+# embedding  = EmbeddingStack(app, \"EmbeddingStack\", storage=storage, env=env)
 # graph      = GraphStack(app, "GraphStack", storage=storage, env=env)
 # retrieval  = RetrievalStack(app, "RetrievalStack", storage=storage, env=env)
 # generation = GenerationStack(app, "GenerationStack", retrieval=retrieval, env=env)

@@ -1,0 +1,7 @@
+# paper_fetcher Lambda dependencies
+# Only stdlib + boto3 (pre-installed in Lambda runtime) needed here.
+# boto3 is not listed — it is pre-installed in the Lambda Python 3.11 runtime.
+# All other imports (xml.etree, urllib, etc.) are stdlib.
+#
+# If you add external deps (e.g. feedparser), list them here and ensure
+# your CDK asset bundling runs `pip install -r requirements.txt`.
