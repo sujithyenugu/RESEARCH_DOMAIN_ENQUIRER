@@ -1,0 +1,14 @@
+# graph_builder Lambda — Python dependencies
+#
+# boto3 / botocore are pre-installed in the AWS Lambda Python 3.11
+# managed runtime and must NOT be listed here to avoid version conflicts.
+#
+# All other third-party packages required at runtime are listed below.
+# Pin minor versions to ensure repeatable builds; patch updates are
+# allowed via the >= constraint (SAM / CDK asset bundling will resolve
+# the latest compatible patch at package time).
+
+# Apache TinkerPop Gremlin Python client — used by neptune_client.py
+# to open WebSocket connections to Amazon Neptune and issue graph
+# traversals via the Gremlin language variant (GLV).
+gremlinpython>=3.7.0

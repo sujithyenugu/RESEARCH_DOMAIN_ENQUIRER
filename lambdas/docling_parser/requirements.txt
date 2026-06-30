@@ -1,0 +1,21 @@
+# Docling Parser Lambda — Python dependencies
+#
+# NOTE: This is a CONTAINER IMAGE Lambda (not a zip deployment).
+# boto3 must be listed explicitly here because the Lambda base image
+# does not pre-install it (unlike zip-based Python 3.11 runtimes).
+#
+# Image size budget:
+#   docling  ~500 MB (includes PyTorch for table structure detection)
+#   boto3    ~30 MB
+#   pillow   ~5 MB
+#   Total uncompressed: ~3 GB (within Lambda container image 10 GB limit)
+
+# Main PDF parsing library — includes ML models for table detection
+# and layout analysis via PyTorch (downloaded to EFS on first cold start)
+docling>=2.0.0
+
+# AWS SDK — required explicitly in container images
+boto3>=1.34.0
+
+# Image processing used by Docling for PDF page rendering
+pillow>=10.0.0
