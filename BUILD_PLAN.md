@@ -64,7 +64,7 @@
 
 ---
 
-## 🔜 DAY 3 — Embedding & Graph Pipeline
+## ✅ DAY 3 — Embedding & Graph Pipeline
 **CDK Stacks:** `EmbeddingStack`, `GraphStack`  
 **Files to create:** `cdk/stacks/embedding_stack.py`, `cdk/stacks/graph_stack.py`, `lambdas/embedding_worker/`, `lambdas/graph_builder/`
 
@@ -90,32 +90,37 @@
 
 ---
 
-## ⏳ DAY 4 — Retrieval Engine
+## ✅ DAY 4 — Retrieval Engine
 **CDK Stack:** `RetrievalStack`  
-**Files to create:** `cdk/stacks/retrieval_stack.py`, `lambdas/query_handler/`, `lambdas/reranker/`, `lambdas/context_builder/`
+**Commit:** `Day 4 updated commit`  
+**Files:** `cdk/stacks/retrieval_stack.py`, `lambdas/query_handler/`, `lambdas/reranker/`, `lambdas/context_builder/`, `tests/test_retrieval_integration.py`
 
-### What to build:
-- [ ] **Lambda: Query Handler**
+### What was built:
+- [x] **Lambda: Query Handler** (`lambdas/query_handler/handler.py`)
   - Accepts POST `/query` from API Gateway
-  - Embeds query via Bedrock Titan
-  - Runs 3 parallel searches: Dense KNN (k=30) + BM25 (k=30) + Neptune graph expansion (k=20)
-  - Merges + deduplicates results (RRF — Reciprocal Rank Fusion)
-  - Calls Reranker Lambda
+  - Query Understanding: Claude 3 Haiku classification + HyDE snippet generation
+  - Embeds HyDE text via Bedrock Titan Embeddings V2 (1536-dim)
+  - Runs 3 parallel searches via `asyncio.gather`: Dense KNN (k=30) + BM25 (k=30) + Neptune graph expansion (k=20)
+  - Merges + deduplicates results with Reciprocal Rank Fusion (RRF, k=60)
+  - Invokes Reranker Lambda synchronously with top-50 RRF candidates
   - Memory: 512 MB, timeout: 30s, VPC-attached
-- [ ] **Lambda: Reranker**
+- [x] **Lambda: Reranker** (`lambdas/reranker/handler.py`)
   - Invokes SageMaker cross-encoder endpoint (`cross-encoder/ms-marco-MiniLM-L-12-v2`)
-  - Scores query-chunk pairs → top-K=10 final chunks
-  - Calls Context Builder Lambda
+  - Batched scoring (batch=20) → top-K=10 final chunks by rerank_score
+  - Graceful fallback to RRF ordering on SageMaker error
+  - Invokes Context Builder Lambda synchronously
   - Memory: 256 MB, timeout: 30s
-- [ ] **Lambda: Context Builder**
-  - Deduplicates chunks
-  - Orders by citation relevance
-  - Assembles prompt with 8,000-token budget
-  - Formats citations in [1], [2], ... style
+- [x] **Lambda: Context Builder** (`lambdas/context_builder/handler.py`)
+  - Deduplication: (paper_id, section_id) + MD5 content hash
+  - Tier-based citation ordering (Tier1 score>0.8 · Tier2 0.5-0.8 · Tier3 graph)
+  - Context compression to 8,000-token budget (truncate Tier2, drop Tier3)
+  - Formats citations as [paper_id] notation
+  - Assembles SYSTEM + CONTEXT + QUESTION + ANSWER prompt string
   - Memory: 256 MB, timeout: 30s
-- [ ] **SageMaker Endpoint** — deploy `cross-encoder/ms-marco-MiniLM-L-12-v2` on `ml.g4dn.xlarge`
-- [ ] **RetrievalStack CDK** — all Lambda configs, SageMaker endpoint, IAM
-- [ ] Integration test: end-to-end query → top chunks retrieved
+- [x] **SageMaker Endpoint** — `cross-encoder/ms-marco-MiniLM-L-12-v2` on `ml.g4dn.xlarge`, auto-scaling min=1 max=3
+- [x] **RetrievalStack CDK** — all Lambda configs, SageMaker Model/EndpointConfig/Endpoint, IAM grants (Bedrock, OpenSearch, Neptune, SageMaker)
+- [x] **Integration + Unit tests** (`tests/test_retrieval_integration.py`) — RRF, dedup, ordering, compression, prompt assembly + live Lambda tests
+- [x] `cdk/app.py` updated — EmbeddingStack, GraphStack, RetrievalStack wired with correct dependency chain
 
 ---
 
@@ -333,4 +338,4 @@ RESEARCH_DOMAIN_ENQUIRER/
 
 ---
 
-*Last updated: Day 2 complete. Next: Day 3 — Embedding & Graph Pipeline.*
+*Last updated: Day 4 complete. Next: Day 5 — Generation & Hallucination Detection.*

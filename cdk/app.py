@@ -23,6 +23,9 @@ Usage:
 import aws_cdk as cdk
 from stacks.storage_stack import StorageStack
 from stacks.ingestion_stack import IngestionStack
+from stacks.embedding_stack import EmbeddingStack
+from stacks.graph_stack import GraphStack
+from stacks.retrieval_stack import RetrievalStack
 
 # ---------------------------------------------------------------------------
 # App configuration
@@ -62,10 +65,55 @@ ingestion = IngestionStack(
 )
 ingestion.add_dependency(storage)
 
+# ---------------------------------------------------------------------------
+# Stage 3 — Embedding pipeline (must be deployed AFTER IngestionStack)
+# ---------------------------------------------------------------------------
+embedding = EmbeddingStack(
+    app,
+    "EmbeddingStack",
+    storage_stack=storage,
+    ingestion_stack=ingestion,
+    env=env,
+    description=(
+        "Research Domain Enquirer — Embedding pipeline: "
+        "SQS-triggered Lambda, Bedrock Titan V2, OpenSearch indexing"
+    ),
+)
+embedding.add_dependency(ingestion)
+
+# ---------------------------------------------------------------------------
+# Stage 4 — Graph pipeline (must be deployed AFTER IngestionStack)
+# ---------------------------------------------------------------------------
+graph = GraphStack(
+    app,
+    "GraphStack",
+    storage_stack=storage,
+    ingestion_stack=ingestion,
+    env=env,
+    description=(
+        "Research Domain Enquirer — Graph pipeline: "
+        "SQS-triggered Lambda, Bedrock entity extraction, Neptune upsert"
+    ),
+)
+graph.add_dependency(ingestion)
+
+# ---------------------------------------------------------------------------
+# Stage 5 — Retrieval engine (must be deployed AFTER EmbeddingStack + GraphStack)
+# ---------------------------------------------------------------------------
+retrieval = RetrievalStack(
+    app,
+    "RetrievalStack",
+    storage_stack=storage,
+    env=env,
+    description=(
+        "Research Domain Enquirer — Retrieval engine: "
+        "Query Handler, Reranker, Context Builder Lambdas + SageMaker cross-encoder"
+    ),
+)
+retrieval.add_dependency(embedding)
+retrieval.add_dependency(graph)
+
 # Future stacks will be added here as they are implemented:
-# embedding  = EmbeddingStack(app, \"EmbeddingStack\", storage=storage, env=env)
-# graph      = GraphStack(app, "GraphStack", storage=storage, env=env)
-# retrieval  = RetrievalStack(app, "RetrievalStack", storage=storage, env=env)
 # generation = GenerationStack(app, "GenerationStack", retrieval=retrieval, env=env)
 # evaluation = EvaluationStack(app, "EvaluationStack", retrieval=retrieval, env=env)
 # api        = ApiStack(app, "ApiStack", generation=generation, env=env)
