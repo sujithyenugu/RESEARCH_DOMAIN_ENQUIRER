@@ -26,6 +26,7 @@ from stacks.ingestion_stack import IngestionStack
 from stacks.embedding_stack import EmbeddingStack
 from stacks.graph_stack import GraphStack
 from stacks.retrieval_stack import RetrievalStack
+from stacks.generation_stack import GenerationStack
 
 # ---------------------------------------------------------------------------
 # App configuration
@@ -113,8 +114,22 @@ retrieval = RetrievalStack(
 retrieval.add_dependency(embedding)
 retrieval.add_dependency(graph)
 
+# ---------------------------------------------------------------------------
+# Stage 6 — Generation pipeline (must be deployed AFTER RetrievalStack)
+# ---------------------------------------------------------------------------
+generation = GenerationStack(
+    app,
+    "GenerationStack",
+    retrieval_stack=retrieval,
+    env=env,
+    description=(
+        "Research Domain Enquirer — Generation pipeline: "
+        "Answer Generator (Claude 3.5 Sonnet) + Hallucination Detector (Claude 3 Haiku)"
+    ),
+)
+generation.add_dependency(retrieval)
+
 # Future stacks will be added here as they are implemented:
-# generation = GenerationStack(app, "GenerationStack", retrieval=retrieval, env=env)
 # evaluation = EvaluationStack(app, "EvaluationStack", retrieval=retrieval, env=env)
 # api        = ApiStack(app, "ApiStack", generation=generation, env=env)
 # frontend   = FrontendStack(app, "FrontendStack", api=api, env=env)

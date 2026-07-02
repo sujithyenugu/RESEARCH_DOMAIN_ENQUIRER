@@ -124,30 +124,33 @@
 
 ---
 
-## ⏳ DAY 5 — Generation & Hallucination Detection
+## ✅ DAY 5 — Generation & Hallucination Detection
 **CDK Stack:** `GenerationStack`  
-**Files to create:** `cdk/stacks/generation_stack.py`, `lambdas/answer_generator/`, `lambdas/hallucination_detector/`
+**Commit:** `Day 5 updated commit`  
+**Files:** `cdk/stacks/generation_stack.py`, `lambdas/answer_generator/`, `lambdas/hallucination_detector/`
 
-### What to build:
-- [ ] **Lambda: Answer Generator**
-  - Calls Bedrock Claude 3.5 Sonnet with assembled context + query
-  - Streams answer tokens (for WebSocket delivery)
+### What was built:
+- [x] **Lambda: Answer Generator** (`lambdas/answer_generator/handler.py`)
+  - Calls Bedrock Claude 3.5 Sonnet (`converse_stream`) with assembled context + query
+  - Streams answer tokens (collected in-memory; ready for WebSocket delivery Day 6)
   - Enforces citation format: every claim must reference `[paper_id]`
-  - Calls Hallucination Detector on complete answer
+  - Calls Hallucination Detector Lambda synchronously on complete answer
+  - Builds final response payload (query, answer, action, confidence, citations, metadata)
   - Memory: 512 MB, timeout: 60s
-- [ ] **Lambda: Hallucination Detector**
-  - Evidence Coverage Check — every claim has a supporting chunk
-  - Citation Grounding — cited paper actually contains claimed info
-  - Unsupported Claim Detection — flags claims with no evidence
-  - Confidence Scoring (0.0–1.0):
-    - >= 0.85 → PASS, return answer
-    - 0.60–0.84 → WARN, add disclaimer
-    - < 0.30 → REFUSE, do not return answer
-  - Uses Bedrock Claude 3 Haiku for claim verification
+- [x] **Lambda: Hallucination Detector** (`lambdas/hallucination_detector/handler.py`)
+  - Step 1 — Atomic claim extraction via Claude 3 Haiku (quantitative / comparative / causal / definitional / existence)
+  - Step 2 — Evidence mapping: citation match + entity overlap + keyword fallback
+  - Step 3 — Per-claim verification via Claude 3 Haiku (SUPPORTED / PARTIALLY_SUPPORTED / UNSUPPORTED / CONTRADICTED)
+  - Step 4 — Evidence coverage analysis (fraction of retrieved chunks cited)
+  - Step 5 — Weighted confidence score (60% claim score + 25% coverage + 15% citation accuracy)
+  - Citation grounding check — every `[paper_id]` in answer verified against context
+  - Response gate: ≥0.85→PASS · 0.60–0.85→PASS_WITH_DISCLAIMER · 0.30–0.60→WARN · <0.30→REFUSE
+  - Emits CloudWatch metrics: ConfidenceScore, EvidenceCoverage, CitationAccuracy, ContradictedClaims
   - Memory: 512 MB, timeout: 30s
-- [ ] **GenerationStack CDK** — Lambda configs, Bedrock IAM, confidence thresholds as env vars
-- [ ] Prompt templates for answer generation + claim verification
-- [ ] Test suite: hallucination detection on synthetic grounded vs. hallucinated answers
+- [x] **Prompt templates** (`lambdas/answer_generator/prompts.py`) — centralised system prompts + builder functions for generation, claim extraction, and claim verification
+- [x] **GenerationStack CDK** (`cdk/stacks/generation_stack.py`) — both Lambda configs, Bedrock IAM (Claude 3.5 Sonnet + Claude 3 Haiku), cross-function invocation grant, CloudWatch log groups (30-day retention), X-Ray tracing, CFN outputs
+- [x] **Test suite** (`tests/test_generation_hallucination.py`) — 18 unit tests covering: evidence mapping, citation accuracy, confidence scoring, coverage analysis, response gating, prompt builders, response payload assembly, and E2E handler smoke tests
+- [x] `cdk/app.py` updated — GenerationStack wired with `add_dependency(retrieval)`
 
 ---
 
@@ -338,4 +341,4 @@ RESEARCH_DOMAIN_ENQUIRER/
 
 ---
 
-*Last updated: Day 4 complete. Next: Day 5 — Generation & Hallucination Detection.*
+*Last updated: Day 5 complete. Next: Day 6 — API Layer.*
