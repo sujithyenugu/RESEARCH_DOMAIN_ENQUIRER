@@ -8,8 +8,8 @@ Deploy order:
   4. GraphStack         — SQS, Lambda (Graph Builder), Neptune config
   5. RetrievalStack     — Lambda (Query Handler, Reranker, Context Builder)
   6. GenerationStack    — Lambda (Answer Gen, Hallucination Detector)
-  7. EvaluationStack    — EventBridge cron, Lambda (Evaluator), S3 eval bucket
-  8. ApiStack           — API Gateway REST + WebSocket
+  7. ApiStack           — API Gateway REST + WebSocket, Response API + WebSocket Handler Lambdas
+  8. EvaluationStack    — EventBridge cron, Lambda (Evaluator), S3 eval bucket
   9. FrontendStack      — S3 (SPA), CloudFront, WAF, ACM cert
   10. MonitoringStack   — CloudWatch Dashboards, Alarms, X-Ray, SNS
 
@@ -27,6 +27,7 @@ from stacks.embedding_stack import EmbeddingStack
 from stacks.graph_stack import GraphStack
 from stacks.retrieval_stack import RetrievalStack
 from stacks.generation_stack import GenerationStack
+from stacks.api_stack import ApiStack
 
 # ---------------------------------------------------------------------------
 # App configuration
@@ -129,9 +130,25 @@ generation = GenerationStack(
 )
 generation.add_dependency(retrieval)
 
+# ---------------------------------------------------------------------------
+# Stage 7 — API layer (must be deployed AFTER GenerationStack)
+# ---------------------------------------------------------------------------
+api = ApiStack(
+    app,
+    "ApiStack",
+    generation_stack=generation,
+    storage_stack=storage,
+    env=env,
+    description=(
+        "Research Domain Enquirer — API layer: "
+        "REST API Gateway (6 routes), WebSocket API (3 routes), "
+        "Response API + WebSocket Handler Lambdas, DynamoDB connection registry"
+    ),
+)
+api.add_dependency(generation)
+
 # Future stacks will be added here as they are implemented:
 # evaluation = EvaluationStack(app, "EvaluationStack", retrieval=retrieval, env=env)
-# api        = ApiStack(app, "ApiStack", generation=generation, env=env)
 # frontend   = FrontendStack(app, "FrontendStack", api=api, env=env)
 # monitoring = MonitoringStack(app, "MonitoringStack", env=env)
 

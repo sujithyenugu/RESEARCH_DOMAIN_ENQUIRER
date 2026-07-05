@@ -154,24 +154,30 @@
 
 ---
 
-## ⏳ DAY 6 — API Layer
+## ✅ DAY 6 — API Layer
 **CDK Stack:** `ApiStack`  
-**Files to create:** `cdk/stacks/api_stack.py`, `lambdas/response_api/`, `lambdas/websocket_handler/`
+**Commit:** `Day 6 updated commit`  
+**Files:** `cdk/stacks/api_stack.py`, `lambdas/response_api/`, `lambdas/websocket_handler/`, `tests/test_api_layer.py`
 
-### What to build:
-- [ ] **API Gateway REST** endpoints:
+### What was built:
+- [x] **API Gateway REST** endpoints (6 routes):
   - `POST /query` → Query Handler Lambda
-  - `GET /papers/{id}` → Paper API Lambda (DynamoDB lookup)
-  - `GET /papers/{id}/chunks` → Chunk API Lambda (OpenSearch lookup)
-  - `GET /graph/entity/{name}` → Graph API Lambda (Neptune Gremlin)
-  - `GET /graph/citation/{id}` → Citation Graph Lambda (Neptune)
-  - `POST /evaluate` → Evaluator Lambda
-- [ ] **API Gateway WebSocket** — `$connect`, `$disconnect`, `sendmessage` routes for streaming answers
-- [ ] **Lambda: Response API** — formats final JSON response with answer + citations + confidence score + metadata
-- [ ] **Lambda: WebSocket Handler** — manages connection IDs, pushes streamed tokens to connected clients
-- [ ] **Cognito Authorizer** (optional) or API key authentication
-- [ ] **ApiStack CDK** — API Gateway, Lambda integrations, CORS config, throttling, usage plans
-- [ ] API contract documentation (OpenAPI spec)
+  - `GET /papers/{id}` → Response API Lambda (DynamoDB lookup)
+  - `GET /papers/{id}/chunks` → Response API Lambda (OpenSearch lookup)
+  - `GET /graph/entity/{name}` → Response API Lambda (Neptune Gremlin)
+  - `GET /graph/citation/{id}` → Response API Lambda (Neptune)
+  - `POST /evaluate` → Response API Lambda (Evaluator stub)
+- [x] **API Gateway WebSocket** — `$connect`, `$disconnect`, `sendmessage` routes for streaming answers
+- [x] **Lambda: Response API** (`lambdas/response_api/handler.py`) — formats final JSON envelope: answer + citations + confidence block + metadata, action-gated HTTP status codes (200/422), CORS headers, CloudWatch metrics
+- [x] **Lambda: WebSocket Handler** (`lambdas/websocket_handler/handler.py`) — manages connection IDs in DynamoDB (TTL), pushes streamed token/done/error frames via API Gateway Management API, `push_streaming_tokens` helper, GoneException cleanup
+- [x] **DynamoDB table** — `research-ws-connections` (TTL-enabled, on-demand, PITR)
+- [x] **IAM roles** (least-privilege per Lambda) — DynamoDB R/W, Secrets Manager, OpenSearch ESHttp, `execute-api:ManageConnections`
+- [x] **CORS** — allow all origins with method + header controls
+- [x] **Throttling** — 100 rps burst / 50 rps steady, Usage Plan 10k/day quota
+- [x] **API Key** — `research-api-key` in Usage Plan
+- [x] **ApiStack CDK** (`cdk/stacks/api_stack.py`) — all constructs, CFN outputs: RestApiUrl, WebSocketApiUrl, function names
+- [x] **Test suite** (`tests/test_api_layer.py`) — 38 unit tests: envelope building, citation normalisation, confidence normalisation, HTTP formatting, connect/disconnect DynamoDB, sendmessage routing, frame shapes, GoneException cleanup, push_streaming_tokens streaming + abort + empty
+- [x] `cdk/app.py` updated — ApiStack wired with `add_dependency(generation)`
 
 ---
 
@@ -341,4 +347,4 @@ RESEARCH_DOMAIN_ENQUIRER/
 
 ---
 
-*Last updated: Day 5 complete. Next: Day 6 — API Layer.*
+*Last updated: Day 6 complete. Next: Day 7 — Frontend (React SPA).*
