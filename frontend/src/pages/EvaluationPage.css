@@ -1,0 +1,86 @@
+/* EvaluationPage Layout */
+.eval-page {
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--color-bg-primary);
+}
+
+.eval-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: rgba(17, 24, 39, 0.9);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: blur(16px);
+}
+
+.eval-content {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1400px;
+}
+
+.eval-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.ingestion-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.ingestion-stat {
+  padding: 12px;
+  border-radius: var(--radius-md) !important;
+  text-align: center;
+}
+
+@media (max-width: 1200px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ingestion-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ingestion-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .eval-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 500px) {
+  .metrics-grid, .ingestion-grid {
+    grid-template-columns: 1fr;
+  }
+}

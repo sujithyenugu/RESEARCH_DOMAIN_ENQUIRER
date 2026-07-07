@@ -181,21 +181,31 @@
 
 ---
 
-## ⏳ DAY 7 — Frontend (React SPA)
+## ✅ DAY 7 — Frontend (React SPA)
 **CDK Stack:** `FrontendStack`  
-**Files to create:** `frontend/` (React app), `cdk/stacks/frontend_stack.py`
+**Commit:** `Day 7 updated commit`  
+**Files:** `cdk/stacks/frontend_stack.py`, `frontend/` (React SPA), `frontend/deploy.ps1`, `frontend/deploy.sh`
 
-### What to build:
-- [ ] **React SPA** with 4 main views:
-  1. **Research Chat UI** — query input, streaming answer display, citation cards, confidence badge
-  2. **Knowledge Graph Viewer** — interactive graph (D3.js or Sigma.js), entity search, citation network
-  3. **Paper Viewer** — paper metadata, abstract, chunks, entity highlights
-  4. **Evaluation Dashboard** — retrieval metrics, latency charts, hallucination rate over time
-- [ ] **API integration** — connect to API Gateway REST + WebSocket endpoints
-- [ ] **CloudFront Distribution** — OAC origin, HTTPS, gzip, custom domain (optional)
-- [ ] **WAF** on CloudFront — rate limiting, bot protection
-- [ ] **FrontendStack CDK** — S3 + CloudFront + WAF + ACM certificate
-- [ ] Deploy script: build React → upload to S3 → invalidate CloudFront cache
+### What was built:
+- [x] **React SPA** with 4 main views:
+  1. **Research Chat UI** (`frontend/src/pages/ChatPage.tsx`) — query input, streaming answer display, citation cards, confidence badge, verification panel, knowledge graph context
+  2. **Knowledge Graph Viewer** (`frontend/src/pages/GraphViewerPage.tsx`) — interactive D3.js force-directed graph, entity search, citation network, entity sidebar
+  3. **Paper Viewer** (`frontend/src/pages/PaperViewerPage.tsx`) — paper metadata, abstract, entities, retrieved chunks, mini citation graph, PDF viewer placeholder
+  4. **Evaluation Dashboard** (`frontend/src/pages/EvaluationPage.tsx`) — retrieval metrics, latency charts, confidence distribution, recall trend, ingestion status
+- [x] **API integration** (`frontend/src/services/api.ts`) — connects to API Gateway REST endpoints, mock mode (`VITE_USE_MOCK_API=true`) for local dev
+- [x] **WebSocket manager** (`frontend/src/services/websocket.ts`) — real-time token streaming + mock stream simulation
+- [x] **Zustand state stores** (`frontend/src/store/index.ts`) — ChatStore, SidebarStore, GraphStore
+- [x] **TypeScript types** (`frontend/src/types/index.ts`) — all data models (Query, Citation, Paper, Graph, Evaluation)
+- [x] **Rich mock data** (`frontend/src/mock/data.ts`) — full mock responses for all API endpoints
+- [x] **Design system CSS** (`frontend/src/index.css`) — dark mode, glassmorphism, gradient accents, micro-animations
+- [x] **Components**: chat (QueryInput, AnswerCard, CitationList, ChunkViewer, GraphContext, ConfidenceBadge, VerificationPanel), graph (KnowledgeGraph, GraphControls, EntitySidebar), eval (MetricCard, LatencyChart, RecallChart), layout (Sidebar)
+- [x] **CloudFront Distribution** — OAC origin, HTTPS, gzip+brotli, SPA error routing (403/404 → index.html)
+- [x] **WAF** on CloudFront — rate limiting (1000 req/5min), AWSManagedRulesCommonRuleSet, AWSManagedRulesKnownBadInputsRuleSet
+- [x] **FrontendStack CDK** (`cdk/stacks/frontend_stack.py`) — S3 + CloudFront + WAF + OAC + BucketDeployment + SSM params, CFN outputs
+- [x] **Deploy scripts** — `frontend/deploy.ps1` (Windows) + `frontend/deploy.sh` (Linux/macOS): build → S3 sync → CloudFront invalidation
+- [x] **SEO meta tags** — title, description, OG tags, Twitter Card in `index.html`
+- [x] **Production build verified** — `tsc && vite build` succeeded, 1,326 modules → `dist/`
+- [x] `cdk/app.py` updated — FrontendStack wired with `add_dependency(api)`
 
 ---
 
@@ -347,4 +357,4 @@ RESEARCH_DOMAIN_ENQUIRER/
 
 ---
 
-*Last updated: Day 6 complete. Next: Day 7 — Frontend (React SPA).*
+*Last updated: Day 7 complete. Next: Day 8 — Evaluation Pipeline.*

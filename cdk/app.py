@@ -2,22 +2,23 @@
 Research Domain Enquirer — CDK App Entry Point
 
 Deploy order:
-  1. StorageStack       — S3, DynamoDB, OpenSearch, Neptune, VPC
-  2. IngestionStack     — EventBridge, SQS, Lambda (Fetcher + Processor)
-  3. EmbeddingStack     — SQS, Lambda (Embedder), Bedrock Titan config
-  4. GraphStack         — SQS, Lambda (Graph Builder), Neptune config
-  5. RetrievalStack     — Lambda (Query Handler, Reranker, Context Builder)
-  6. GenerationStack    — Lambda (Answer Gen, Hallucination Detector)
-  7. ApiStack           — API Gateway REST + WebSocket, Response API + WebSocket Handler Lambdas
-  8. EvaluationStack    — EventBridge cron, Lambda (Evaluator), S3 eval bucket
-  9. FrontendStack      — S3 (SPA), CloudFront, WAF, ACM cert
-  10. MonitoringStack   — CloudWatch Dashboards, Alarms, X-Ray, SNS
+  1.  StorageStack       — S3, DynamoDB, OpenSearch, Neptune, VPC
+  2.  IngestionStack     — EventBridge, SQS, Lambda (Fetcher + Processor)
+  3.  EmbeddingStack     — SQS, Lambda (Embedder), Bedrock Titan config
+  4.  GraphStack         — SQS, Lambda (Graph Builder), Neptune config
+  5.  RetrievalStack     — Lambda (Query Handler, Reranker, Context Builder)
+  6.  GenerationStack    — Lambda (Answer Gen, Hallucination Detector)
+  7.  ApiStack           — API Gateway REST + WebSocket, Response API + WebSocket Handler Lambdas
+  8.  FrontendStack      — React SPA on S3 + CloudFront CDN + WAF protection
+  9.  EvaluationStack    — EventBridge cron, Lambda (Evaluator), S3 eval bucket
+  10. MonitoringStack    — CloudWatch Dashboards, Alarms, X-Ray, SNS
 
 Usage:
   cdk bootstrap aws://ACCOUNT_ID/REGION
   cdk deploy StorageStack
   cdk deploy IngestionStack
   ...
+  cdk deploy FrontendStack   # requires us-east-1 (CloudFront WAF constraint)
 """
 
 import aws_cdk as cdk
@@ -28,6 +29,7 @@ from stacks.graph_stack import GraphStack
 from stacks.retrieval_stack import RetrievalStack
 from stacks.generation_stack import GenerationStack
 from stacks.api_stack import ApiStack
+from stacks.frontend_stack import FrontendStack
 
 # ---------------------------------------------------------------------------
 # App configuration
@@ -147,9 +149,24 @@ api = ApiStack(
 )
 api.add_dependency(generation)
 
+# ---------------------------------------------------------------------------
+# Stage 8 — Frontend layer (must be deployed AFTER ApiStack)
+# NOTE: CloudFront WAF requires us-east-1 — ensure env.region == 'us-east-1'
+# ---------------------------------------------------------------------------
+frontend = FrontendStack(
+    app,
+    "FrontendStack",
+    api_stack=api,
+    env=env,
+    description=(
+        "Research Domain Enquirer — Frontend layer: "
+        "React SPA on S3 + CloudFront CDN + WAF protection"
+    ),
+)
+frontend.add_dependency(api)
+
 # Future stacks will be added here as they are implemented:
 # evaluation = EvaluationStack(app, "EvaluationStack", retrieval=retrieval, env=env)
-# frontend   = FrontendStack(app, "FrontendStack", api=api, env=env)
 # monitoring = MonitoringStack(app, "MonitoringStack", env=env)
 
 # ---------------------------------------------------------------------------
