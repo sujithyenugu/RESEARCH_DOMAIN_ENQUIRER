@@ -10,7 +10,7 @@ Deploy order:
   6.  GenerationStack    — Lambda (Answer Gen, Hallucination Detector)
   7.  ApiStack           — API Gateway REST + WebSocket, Response API + WebSocket Handler Lambdas
   8.  FrontendStack      — React SPA on S3 + CloudFront CDN + WAF protection
-  9.  EvaluationStack    — EventBridge cron, Lambda (Evaluator), S3 eval bucket
+  9.  EvaluationStack    — EventBridge cron, Lambda (Online/Offline Evaluator), SNS alerts, CW Dashboard  ✅ Day 8
   10. MonitoringStack    — CloudWatch Dashboards, Alarms, X-Ray, SNS
 
 Usage:
@@ -30,6 +30,7 @@ from stacks.retrieval_stack import RetrievalStack
 from stacks.generation_stack import GenerationStack
 from stacks.api_stack import ApiStack
 from stacks.frontend_stack import FrontendStack
+from stacks.evaluation_stack import EvaluationStack
 
 # ---------------------------------------------------------------------------
 # App configuration
@@ -165,8 +166,24 @@ frontend = FrontendStack(
 )
 frontend.add_dependency(api)
 
-# Future stacks will be added here as they are implemented:
-# evaluation = EvaluationStack(app, "EvaluationStack", retrieval=retrieval, env=env)
+# ---------------------------------------------------------------------------
+# Stage 9 — Evaluation pipeline (must be deployed AFTER FrontendStack)
+# ---------------------------------------------------------------------------
+evaluation = EvaluationStack(
+    app,
+    "EvaluationStack",
+    storage_stack=storage,
+    frontend_stack=frontend,
+    env=env,
+    description=(
+        "Research Domain Enquirer — Evaluation pipeline: "
+        "Online Evaluator + Offline Evaluator Lambdas, EventBridge nightly cron, "
+        "DynamoDB EvalHistory, SNS alerts, CloudWatch Evaluation Dashboard"
+    ),
+)
+evaluation.add_dependency(frontend)
+
+# Future stacks will be added here:
 # monitoring = MonitoringStack(app, "MonitoringStack", env=env)
 
 # ---------------------------------------------------------------------------

@@ -209,26 +209,40 @@
 
 ---
 
-## ⏳ DAY 8 — Evaluation Pipeline
+## ✅ DAY 8 — Evaluation Pipeline
 **CDK Stack:** `EvaluationStack`  
-**Files to create:** `cdk/stacks/evaluation_stack.py`, `lambdas/evaluator/`, `evaluation/golden_dataset/`
+**Commit:** `Day 8 updated commit`  
+**Files:** `cdk/stacks/evaluation_stack.py`, `lambdas/evaluator/`, `evaluation/golden_dataset/`, `tests/test_evaluation_pipeline.py`
 
-### What to build:
-- [ ] **Golden Dataset** — 50 research questions with ground-truth answers + source papers
-- [ ] **Lambda: Online Evaluator** — runs on every query, computes:
-  - Retrieval precision@K, recall@K, NDCG
-  - Answer ROUGE-L, BERTScore
-  - Hallucination rate, confidence score distribution
-  - End-to-end latency (P50, P95, P99)
-- [ ] **Lambda: Offline Evaluator** — nightly batch run over full golden dataset
-  - Triggered by EventBridge cron (`0 2 * * *`)
+### What was built:
+- [x] **Golden Dataset** — 50 research Q&A pairs across 7 categories in `evaluation/golden_dataset/golden_qa_v1.json`
+- [x] **Annotation Guidelines** — `evaluation/golden_dataset/annotation_guidelines.md`
+- [x] **Lambda: Online Evaluator** (`lambdas/evaluator/handler.py::online_handler`)
+  - Invoked per query — latency, confidence, citation accuracy, chunk count
+  - Publishes 10+ CloudWatch metrics per query (per-stage latency + scores)
+  - Memory: 256 MB, timeout: 30s
+- [x] **Lambda: Offline Evaluator** (`lambdas/evaluator/handler.py::offline_handler`)
+  - Triggered by EventBridge cron (`0 2 * * ? *`)
+  - Runs full RAG pipeline for each golden question via Query Handler Lambda
+  - Computes: Recall@5, Recall@10, MRR, Hit Rate@10, nDCG@10, Faithfulness, Groundedness, Citation Accuracy, Answer Relevance
   - Writes results to S3 `research-evaluation/` bucket
-- [ ] **CloudWatch Dashboard** — real-time metrics: papers/day, queries/day, hallucination rate, latency
-- [ ] **CloudWatch Alarms**:
-  - Hallucination rate > 15% → SNS alert
-  - P95 latency > 5s → SNS alert
-  - Ingestion DLQ depth > 10 → SNS alert
-- [ ] **EvaluationStack CDK** — EventBridge cron, Lambda, S3 eval bucket, SNS topic
+  - Writes aggregated metrics to DynamoDB `EvalHistory` table
+  - Regression detection vs 7-day baseline with SNS alerting
+- [x] **Metrics module** (`lambdas/evaluator/metrics.py`) — pure functions, fully unit-testable
+- [x] **CloudWatch Dashboard** — `ResearchRAG-Evaluation` with 4 rows: retrieval, generation, latency, ingestion
+- [x] **CloudWatch Alarms** (6 alarms):
+  - Recall@10 < 0.70 for 2 eval runs → SNS alert
+  - Faithfulness < 0.75 daily eval → SNS alert
+  - E2E P95 latency > 8s (5min) → SNS alert
+  - Citation accuracy < 0.90 → SNS alert
+  - Confidence avg < 0.65 (1h) → SNS alert
+  - Refusal rate > 15% (1h) → SNS alert
+- [x] **DynamoDB Table** — `EvalHistory` (GSI: date-index for trend queries)
+- [x] **SNS Topic** — `research-eval-alerts` for regression alerts
+- [x] **EventBridge cron rule** — daily 02:00 UTC → Offline Evaluator
+- [x] **EvaluationStack CDK** (`cdk/stacks/evaluation_stack.py`) — all constructs, IAM grants (Bedrock, S3, DynamoDB, Lambda invoke), CFN outputs
+- [x] **Test suite** (`tests/test_evaluation_pipeline.py`) — 38 unit tests: all retrieval metrics, all generation metrics, percentile, aggregate, regression detection, online handler, offline handler smoke, CloudWatch batching
+- [x] `cdk/app.py` updated — EvaluationStack wired with `add_dependency(frontend)`
 
 ---
 
@@ -357,4 +371,4 @@ RESEARCH_DOMAIN_ENQUIRER/
 
 ---
 
-*Last updated: Day 7 complete. Next: Day 8 — Evaluation Pipeline.*
+*Last updated: Day 8 complete. Next: Day 9 — Monitoring & Observability.*
