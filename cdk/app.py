@@ -11,7 +11,7 @@ Deploy order:
   7.  ApiStack           — API Gateway REST + WebSocket, Response API + WebSocket Handler Lambdas
   8.  FrontendStack      — React SPA on S3 + CloudFront CDN + WAF protection
   9.  EvaluationStack    — EventBridge cron, Lambda (Online/Offline Evaluator), SNS alerts, CW Dashboard  ✅ Day 8
-  10. MonitoringStack    — CloudWatch Dashboards, Alarms, X-Ray, SNS
+  10. MonitoringStack    — CloudWatch Dashboards, Alarms, X-Ray, CloudTrail, Cost Anomaly  ✅ Day 9
 
 Usage:
   cdk bootstrap aws://ACCOUNT_ID/REGION
@@ -31,6 +31,7 @@ from stacks.generation_stack import GenerationStack
 from stacks.api_stack import ApiStack
 from stacks.frontend_stack import FrontendStack
 from stacks.evaluation_stack import EvaluationStack
+from stacks.monitoring_stack import MonitoringStack
 
 # ---------------------------------------------------------------------------
 # App configuration
@@ -183,8 +184,21 @@ evaluation = EvaluationStack(
 )
 evaluation.add_dependency(frontend)
 
-# Future stacks will be added here:
-# monitoring = MonitoringStack(app, "MonitoringStack", env=env)
+# ---------------------------------------------------------------------------
+# Stage 10 — Monitoring & Observability (must be deployed AFTER EvaluationStack)
+# ---------------------------------------------------------------------------
+monitoring = MonitoringStack(
+    app,
+    "MonitoringStack",
+    evaluation_stack=evaluation,
+    env=env,
+    description=(
+        "Research Domain Enquirer — Monitoring & Observability: "
+        "X-Ray tracing, CloudWatch dashboards + composite alarms, "
+        "CloudTrail, Cost Anomaly Detection, SNS ops alerts"
+    ),
+)
+monitoring.add_dependency(evaluation)
 
 # ---------------------------------------------------------------------------
 # Synthesise all stacks

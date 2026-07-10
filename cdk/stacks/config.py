@@ -317,3 +317,48 @@ SECRET_SAGEMAKER_ENDPOINT   = f"{PROJECT_PREFIX}-rag/sagemaker-endpoint"
 # CloudWatch namespace
 # ---------------------------------------------------------------------------
 CW_NAMESPACE = "ResearchRAG"
+
+# ---------------------------------------------------------------------------
+# Day 9 — Monitoring & Observability constants
+# ---------------------------------------------------------------------------
+
+# X-Ray
+MONITORING_XRAY_GROUP_NAME     = f"{PROJECT_PREFIX}-rag-traces"
+MONITORING_XRAY_SAMPLING_RATE  = 0.05   # 5% fixed-rate sampling
+
+# CloudWatch Dashboard
+MONITORING_OPS_DASHBOARD_NAME  = "ResearchRAG-Operations"
+
+# CloudTrail
+MONITORING_CLOUDTRAIL_BUCKET   = f"{PROJECT_PREFIX}-cloudtrail-logs"
+MONITORING_LOG_RETENTION_DAYS  = 90     # days before CloudTrail logs expire in S3
+
+# Cost Anomaly Detection
+MONITORING_COST_ANOMALY_THRESHOLD_PCT = 20   # alert when spend spikes >20%
+
+# Per-Lambda error alarm threshold (errors per 5-minute window)
+MONITORING_ALARM_ERROR_RATE_MAX    = 5
+MONITORING_ALARM_THROTTLE_RATE_MAX = 10
+
+# Lambda Powertools env-var values injected by MonitoringStack SSM params
+POWERTOOLS_SERVICE_NAME         = f"{PROJECT_PREFIX}-rag"
+POWERTOOLS_METRICS_NAMESPACE    = CW_NAMESPACE
+POWERTOOLS_LOG_LEVEL            = "INFO"
+
+# All Lambda function short-names whose log groups will receive metric filters.
+# Format: just the suffix after "{PROJECT_PREFIX}-" in the function name.
+ALL_LAMBDA_LOG_GROUPS: list[str] = [
+    "paper-fetcher",
+    "paper-processor",
+    "embedding-worker",
+    "graph-builder",
+    "query-handler",
+    "reranker",
+    "context-builder",
+    "answer-generator",
+    "hallucination-detector",
+    "response-api",
+    "websocket-handler",
+    "online-evaluator",
+    "offline-evaluator",
+]

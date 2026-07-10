@@ -246,19 +246,37 @@
 
 ---
 
-## ⏳ DAY 9 — Monitoring & Observability
+## ✅ DAY 9 — Monitoring & Observability
 **CDK Stack:** `MonitoringStack`  
-**Files to create:** `cdk/stacks/monitoring_stack.py`
+**Commit:** `Day 9 updated commit`  
+**Files:** `cdk/stacks/monitoring_stack.py`, `cdk/stacks/config.py` (Day-9 constants), `cdk/app.py` (Stage 10 wired), `tests/test_monitoring.py`
 
-### What to build:
-- [ ] **AWS X-Ray tracing** — end-to-end distributed trace across all Lambdas (query → retrieve → generate)
-- [ ] **CloudWatch Log Insights queries** — saved queries for debugging ingestion failures, slow queries
-- [ ] **CloudWatch Composite Alarms** — combined system health alarm
-- [ ] **SNS Topic + Email/Slack alerts** for critical alarms
-- [ ] **Lambda Powertools** integration — structured logging, custom metrics, X-Ray tracing via decorator in all Lambdas
-- [ ] **Cost Anomaly Detection** — AWS Cost Anomaly Detector alert if spend spikes > 20%
-- [ ] **CloudTrail** — audit log of all API calls (enabled at account level)
-- [ ] **MonitoringStack CDK** — all CloudWatch resources, X-Ray groups, SNS
+### What was built:
+- [x] **AWS X-Ray Group** — `research-rag-traces` group with Insights + Notifications enabled; filter expression targets all `research` service annotations
+- [x] **AWS X-Ray Sampling Rule** — 5% fixed-rate, 10 req/s reservoir, applies to all `AWS::Lambda::Function` service types
+- [x] **CloudWatch Log Insights Queries** (4 saved queries):
+  - `research/ingestion-failures` — ERROR logs from paper_fetcher + paper_processor
+  - `research/slow-queries` — query_handler requests with duration_ms > 5 000
+  - `research/hallucination-refusals` — REFUSE action from hallucination_detector
+  - `research/embedding-errors` — ERROR logs from embedding_worker
+- [x] **CloudWatch Metric Filters** — ERROR count filter on every Lambda log group (13 functions), one alarm per function → feeds Composite Alarm
+- [x] **Business Metric Alarms** (6 alarms):
+  - Query Handler P95 latency > 8 000 ms (2 eval periods)
+  - Lambda Throttles > 10 (any function, 2 eval periods)
+  - Paper DLQ depth ≥ 1 message
+  - Embedding DLQ depth ≥ 1 message
+  - OpenSearch cluster status RED
+  - Neptune write latency > 500 ms (3 eval periods)
+- [x] **CloudWatch Composite Alarm** — `research-system-health` fires when ANY constituent alarm is ALARM; SNS ALARM + OK notifications
+- [x] **SNS Ops Topic** — `research-ops-alerts` with optional email subscription; cost anomaly + CloudTrail policies attached
+- [x] **CloudTrail** — `research-audit-trail` (management events, file validation, CloudWatch Logs delivery, single-region)
+- [x] **CloudTrail S3 Bucket** — `research-cloudtrail-logs` (private, S3-managed encryption, 90-day lifecycle expiry)
+- [x] **AWS Cost Anomaly Detection** — SERVICE-dimensional monitor; daily subscription → SNS when spend spikes >20% vs baseline
+- [x] **CloudWatch Dashboard** — `ResearchRAG-Operations` (6 rows): System Health, Lambda Invocations/Errors, Lambda Durations P50/P95/P99, SQS queue depths, OpenSearch + Neptune health, RAG Quality metrics (Confidence, Citation Accuracy, Hallucination distribution)
+- [x] **Lambda Powertools constants** — `POWERTOOLS_SERVICE_NAME`, `POWERTOOLS_METRICS_NAMESPACE`, `POWERTOOLS_LOG_LEVEL` added to `config.py` for uniform env-var injection
+- [x] **MonitoringStack CDK** (`cdk/stacks/monitoring_stack.py`) — all constructs, IAM policies, CloudTrail bucket resource policies, CFN outputs (5 outputs: dashboard URL, ops topic ARN, composite alarm ARN, X-Ray group name, CloudTrail name)
+- [x] **Test suite** (`tests/test_monitoring.py`) — 40+ unit tests: config constants, ALL_LAMBDA_LOG_GROUPS, _add_error_metric_filter, CDK template assertions (SNS, X-Ray group/sampling, Log Insights queries, CloudTrail, Cost Anomaly, Dashboard, Composite Alarm, CFN outputs), alarm rule building, safe_id sanitisation, constructor parameter handling, S3 bucket policy assertions
+- [x] `cdk/app.py` updated — MonitoringStack wired as Stage 10 with `add_dependency(evaluation)`
 
 ---
 
@@ -371,4 +389,4 @@ RESEARCH_DOMAIN_ENQUIRER/
 
 ---
 
-*Last updated: Day 8 complete. Next: Day 9 — Monitoring & Observability.*
+*Last updated: Day 9 complete. Next: Day 10 — Integration Testing, Hardening & Final Push.*
